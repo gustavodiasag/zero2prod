@@ -1,5 +1,5 @@
 use axum_test::TestServer;
-use zero2prod::app;
+use zero2prod::startup::app;
 
 #[cfg(test)]
 async fn test_app() -> TestServer {
