@@ -11,7 +11,7 @@ fi
 if ! [ -x "$(command -v sqlx)" ]; then
   echo >&2 "Error: sqlx is not installed."
   echo >&2 "Use:"
-  echo >&2 "    cargo install --version=0.5.7 sqlx-cli --no-defaul"
+  echo >&2 "    cargo install --version=0.5.7 sqlx-cli --no-default-features --features postgres"
   echo >&2 "to install it."
   exit 1
 fi
@@ -33,7 +33,7 @@ docker run \
 fi
 
 # Keep pinging Postgres until it's ready to accept commands
-export PGPASWWORD="${DB_PASSWORD}"
+export PGPASSWORD="${DB_PASSWORD}"
 until psql -h "localhost" -U "${DB_USER}" -p "${DB_PORT}" -d "postgres" -c '\q'; do
   >&2 echo "Postgres is still unavailable - sleeping"
   sleep 1
