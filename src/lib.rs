@@ -1,14 +1,27 @@
-use axum::{http, routing::get, Router};
+use axum::{
+    http::StatusCode,
+    routing::{get, post},
+    Form, Router,
+};
+use serde;
 use tokio::net::TcpListener;
 
-pub fn new_app() -> Router {
-    Router::new().route("/health_check", get(health_check))
+#[derive(serde::Deserialize)]
+pub struct Subscription {
+    email: String,
+    name: String,
+}
+
+pub fn app() -> Router {
+    Router::new()
+        .route("/health_check", get(health_check))
+        .route("/subscriptions", post(subscribe))
 }
 
 pub async fn run() {
     tracing_subscriber::fmt::init();
 
-    let app = new_app();
+    let app = app();
 
     let listener = TcpListener::bind("127.0.0.1:3000").await.unwrap();
 
@@ -20,8 +33,12 @@ pub async fn run() {
         .unwrap();
 }
 
-async fn health_check() -> http::StatusCode {
-    http::StatusCode::OK
+async fn health_check() -> StatusCode {
+    StatusCode::OK
+}
+
+async fn subscribe(Form(_subscription): Form<Subscription>) -> StatusCode {
+    StatusCode::OK
 }
 
 async fn shutdown_signal() {
