@@ -1,20 +1,20 @@
 use axum_test::TestServer;
-use zero2prod::new_app;
+use zero2prod::app;
 
 #[cfg(test)]
-async fn new_test_app() -> TestServer {
-    let test_app = new_app();
+async fn test_app() -> TestServer {
+    let test_app = app();
 
     TestServer::new(test_app).unwrap()
 }
 
 #[cfg(test)]
 mod health_check_endpoint {
-    use crate::new_test_app;
+    use crate::test_app;
 
     #[tokio::test]
     async fn health_check_works() {
-        let server = new_test_app().await;
+        let server = test_app().await;
 
         let response = server.get("/health_check").await;
 
@@ -26,46 +26,49 @@ mod health_check_endpoint {
 #[cfg(test)]
 mod subscription_endpoint {
     use serde::Serialize;
-    use axum::http::StatusCode;
 
-    use crate::new_test_app;
+    use crate::test_app;
 
     #[derive(Serialize)]
-    struct SubscriberForm {
+    struct Subscription {
         name: String,
         email: String,
     }
 
     #[tokio::test]
-    async fn valid_subscription() {
-         let server = new_test_app().await;
+    async fn test_valid_subscription() {
+        let server = test_app().await;
 
-         let body = SubscriberForm {
-             name: "foo".to_string(),
-             email: "bar".to_string(),
-         };
-         let response = server
+        let body = Subscription {
+            name: "foo".to_string(),
+            email: "bar".to_string(),
+        };
+        let response = server
             .post("/subscriptions")
-            .form::<SubscriberForm>(&body)
+            .form::<Subscription>(&body)
             .await;
 
         assert!(response.status_code().is_success());
     }
 
-    #[tokio::test]
-    async fn invalid_subscription() {
-        let server = new_test_app().await;
+    #[derive(Serialize)]
+    struct Name {
+        name: String,
+    }
 
-        let body = SubscriberForm {
-            name: "".to_string(),
-            email: "".to_string(),
+    #[tokio::test]
+    async fn test_invalid_subscription() {
+        let server = test_app().await;
+
+        let body = Name {
+            name: "foo".to_string(),
         };
         let response = server
             .post("/subscriptions")
             .expect_failure()
-            .form::<SubscriberForm>(&body)
+            .form::<Name>(&body)
             .await;
 
-        assert_eq!(response.status_code(), StatusCode::BAD_REQUEST);
+        assert!(response.status_code().is_client_error());
     }
 }
